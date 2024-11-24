@@ -34,13 +34,13 @@ func HandleList(status []string) {
 
 	if len(status) == 0 {
 
-		tasks, err := task.FetchAll()
+		_, err := task.FetchAll()
 
 		if err != nil {
 			log.Fatalf("Error fetching tasks: %v", err)
 		}
 
-		fmt.Println(tasks)
+		// fmt.Println(tasks)
 
 	} else {
 

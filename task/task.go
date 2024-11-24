@@ -28,7 +28,7 @@ const (
 	DONE       TaskStatus = "done"
 )
 
-var taskId int = 1
+var taskId int = 0
 var filePath string = "tasks.json"
 var tasks = Tasks{
 	Tasks: make([]Task, 0),
@@ -44,6 +44,7 @@ func (t Task) String() string {
 }
 
 func NewTask(desc string) Task {
+	taskId++
 	t := Task{
 		Id:          taskId,
 		Description: desc,
@@ -51,27 +52,33 @@ func NewTask(desc string) Task {
 		CreatedAt:   time.Now(),
 	}
 	tasks.Tasks = append(tasks.Tasks, t)
-	taskId++
+
 	return t
 }
 
-// func (t *Task) UnmarshalJSON(p []byte) error {
+func init() {
+	// var tasksTmp Tasks
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		tasks.Tasks = make([]Task, 0)
+		return
+	}
+	buf, err := os.ReadFile(filePath)
 
-// 	log.Println("Calling Unmarshal JSON as intermediate")
-// 	var tmp []interface{}
+	if err != nil {
+		log.Fatalf("Error reading file %s: %v", filePath, err)
+	}
 
-// 	if err := json.Unmarshal(p, &tmp); err != nil {
-// 		return err
-// 	}
+	err = json.Unmarshal(buf, &tasks)
 
-// 	t.Id = tmp[0].(int)
-// 	t.Description = tmp[1].(string)
-// 	t.Status = TaskStatus(tmp[2].(string))
-// 	t.CreatedAt = tmp[3].(time.Time)
-// 	t.UpdatedAt = tmp[4].(time.Time)
+	if err != nil {
+		log.Fatalf("error while decoding json: %v", err)
+	}
 
-// 	return nil
-// }
+	// tasks.Tasks = tasksTmp.Tasks
+	taskId = len(tasks.Tasks)
+
+	log.Printf("Init tasks: %v\nNo of tasks: %d", tasks.Tasks, taskId)
+}
 
 func (t *Task) Save() (int, error) {
 
@@ -137,7 +144,7 @@ func markStatus(status string) TaskStatus {
 
 func FetchAll() (*[]Task, error) {
 
-	var tasks Tasks
+	// var tasksTmp Tasks
 
 	_, err := os.Stat(filePath)
 
@@ -156,6 +163,9 @@ func FetchAll() (*[]Task, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error while decoding json: %v", err)
 	}
+
+	// tasks.Tasks = tasksTmp.Tasks
+	fmt.Println("All Tasks: ", tasks.Tasks)
 
 	return &tasks.Tasks, nil
 }
