@@ -76,17 +76,15 @@ func init() {
 
 	// tasks.Tasks = tasksTmp.Tasks
 	taskId = len(tasks.Tasks)
-
-	log.Printf("Init tasks: %v\nNo of tasks: %d", tasks.Tasks, taskId)
 }
 
-func (t *Task) Save() (int, error) {
+func Save() error {
 
 	log.Printf("Tasks: %v", tasks.Tasks)
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 
 	if err != nil {
-		return 0, fmt.Errorf("error while opening file: %v", err)
+		return fmt.Errorf("error while opening file: %v", err)
 	}
 
 	defer f.Close()
@@ -94,42 +92,33 @@ func (t *Task) Save() (int, error) {
 	buf, err := json.MarshalIndent(tasks, "", " ")
 
 	if err != nil {
-		return 0, fmt.Errorf("error while encoding json: %v", err)
+		return fmt.Errorf("error while encoding json: %v", err)
 	}
 
 	_, err = f.Write(buf)
 	if err != nil {
-		return 0, fmt.Errorf("error while writing to file: %v", err)
+		return fmt.Errorf("error while writing to file: %v", err)
 	}
 
-	return t.Id, nil
+	return nil
 }
 
 func MarkTask(taskId int, status string) (int, error) {
-	task, err := FetchById(taskId)
-
-	if err != nil {
-		return 0, fmt.Errorf("task with id %d not found", taskId)
+	for i := range tasks.Tasks {
+		if tasks.Tasks[i].Id == taskId {
+			tasks.Tasks[i].Status = markStatus(status)
+			tasks.Tasks[i].UpdatedAt = time.Now()
+			log.Printf("Updated Tasks: %v", tasks.Tasks)
+			err := Save()
+			if err != nil {
+				return 0, err
+			}
+			return taskId, nil
+		}
 	}
 
-	task.Status = markStatus(status)
-	task.UpdatedAt = time.Now()
-	log.Printf("Found Task: %v", *task)
-
-	return task.Save()
+	return 0, fmt.Errorf("task with id %d not found", taskId)
 }
-
-// func MarkDone(taskId int) (int, error) {
-
-// 	for _, task := range tasks.Tasks {
-// 		if task.Id == taskId {
-// 			task.Status = DONE
-// 			task.UpdatedAt = time.Now()
-// 			return task.Save()
-// 		}
-// 	}
-// 	return 0, fmt.Errorf("task with id %d not found", taskId)
-// }
 
 func markStatus(status string) TaskStatus {
 	if status == "mark-in-progress" {
@@ -164,42 +153,56 @@ func FetchAll() (*[]Task, error) {
 		return nil, fmt.Errorf("error while decoding json: %v", err)
 	}
 
-	// tasks.Tasks = tasksTmp.Tasks
-	fmt.Println("All Tasks: ", tasks.Tasks)
-
 	return &tasks.Tasks, nil
 }
 
 func FetchByStatus(status TaskStatus) (*[]Task, error) {
 
-	tasks, err := FetchAll()
+	_, err := FetchAll()
 
 	if err != nil {
 		return nil, err
 	}
-	filteredTasks := filter(*tasks, func(task Task) bool { return task.Status == status })
+	filteredTasks := filter(func(task Task) bool { return task.Status == status })
 
 	return &filteredTasks, nil
 }
 
 func FetchById(id int) (*Task, error) {
 
-	tasks, err := FetchAll()
+	// _, err := FetchAll()
 
-	if err != nil {
-		return &Task{}, err
-	}
-	filteredTasks := filter(*tasks, func(task Task) bool { return task.Id == id })
+	// if err != nil {
+	// 	return &Task{}, err
+	// }
+	// log.Printf("Address of task: %p", &tasks)
+	filteredTasks := filter(func(task Task) bool { return task.Id == id })
 
 	return &filteredTasks[0], nil
 }
 
-func filter(tasks []Task, f func(task Task) bool) []Task {
+func filter(f func(task Task) bool) []Task {
+
 	result := []Task{}
-	for _, task := range tasks {
+	for _, task := range tasks.Tasks {
 		if f(task) {
 			result = append(result, task)
 		}
 	}
 	return result
+}
+
+func UpdateTask(id int, description string) error {
+	for i := range tasks.Tasks {
+		if tasks.Tasks[i].Id == id {
+			tasks.Tasks[i].Description = description
+			tasks.Tasks[i].UpdatedAt = time.Now()
+			err := Save()
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("task with id %d not found", id)
 }

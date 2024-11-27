@@ -24,7 +24,7 @@ func main() {
 		case "add":
 
 			if len(fields) < 2 {
-				log.Fatalf("insufficient arguments, expected 1, received zero")
+				log.Println("insufficient arguments, expected 1, received zero")
 			}
 			handler.HandleAdd(fields[1:])
 		case "list":
@@ -32,10 +32,12 @@ func main() {
 			handler.HandleList(fields[1:])
 		case "mark-in-progress", "mark-done":
 			handler.HandleMark(fields)
+		case "update":
+			handler.HandleUpdate(fields[1:])
 		case "exit":
 			os.Exit(0)
 		default:
-			log.Fatalf("invalid command. %v\n", cmd)
+			log.Printf("invalid command. %v\n", cmd)
 			return
 		}
 	}
