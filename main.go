@@ -22,18 +22,15 @@ func main() {
 		// fmt.Println(cmd, fields)
 		switch cmd {
 		case "add":
-
-			if len(fields) < 2 {
-				log.Println("insufficient arguments, expected 1, received zero")
-			}
-			handler.HandleAdd(fields[1:])
+			handler.HandleAdd(fields)
 		case "list":
-
 			handler.HandleList(fields[1:])
 		case "mark-in-progress", "mark-done":
 			handler.HandleMark(fields)
 		case "update":
 			handler.HandleUpdate(fields[1:])
+		case "delete":
+			handler.HandleDelete(fields)
 		case "exit":
 			os.Exit(0)
 		default:
