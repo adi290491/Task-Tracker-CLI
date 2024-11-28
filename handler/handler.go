@@ -9,9 +9,13 @@ import (
 	"task-cli/task"
 )
 
-func HandleAdd(args []string) {
+func HandleAdd(fields []string) {
+	if len(fields) < 2 {
+		log.Println("insufficient arguments, expected 1, received zero")
+		return
+	}
 
-	desc := strings.Join(args[0:], " ")
+	desc := strings.Join(fields[1:], " ")
 	desc = strings.ReplaceAll(desc, "\"", "")
 
 	var t = task.NewTask(desc)
@@ -88,5 +92,27 @@ func HandleUpdate(fields []string) {
 	desc = strings.ReplaceAll(desc, "\"", "")
 
 	err := task.UpdateTask(id, desc)
-	log.Printf("Error updating task: %v\n", err)
+	if err != nil {
+		log.Printf("Error updating task: %v\n", err)
+	} else {
+		fmt.Printf("Task updated successfully (ID: %d)\n", id)
+	}
+}
+
+func HandleDelete(fields []string) {
+	if len(fields) < 2 {
+		log.Printf("Insufficient arguments,\nUsage: update <id>\n")
+		return
+	}
+
+	id, _ := strconv.Atoi(fields[1])
+
+	err := task.DeleteTask(id)
+
+	if err == nil {
+		fmt.Printf("Task deleted successfully (ID: %d)\n", id)
+	} else {
+		log.Printf("Error deleting task: %v\n", err)
+	}
+
 }

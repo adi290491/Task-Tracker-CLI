@@ -65,17 +65,22 @@ func init() {
 	buf, err := os.ReadFile(filePath)
 
 	if err != nil {
-		log.Fatalf("Error reading file %s: %v", filePath, err)
+		log.Printf("Error reading file %s: %v", filePath, err)
 	}
 
 	err = json.Unmarshal(buf, &tasks)
 
 	if err != nil {
-		log.Fatalf("error while decoding json: %v", err)
+		log.Printf("error while decoding json: %v", err)
 	}
 
 	// tasks.Tasks = tasksTmp.Tasks
-	taskId = len(tasks.Tasks)
+	if len(tasks.Tasks) == 0 {
+		taskId = 0
+	} else {
+		taskId = tasks.Tasks[len(tasks.Tasks)-1].Id
+	}
+
 }
 
 func Save() error {
@@ -104,6 +109,11 @@ func Save() error {
 }
 
 func MarkTask(taskId int, status string) (int, error) {
+
+	if len(tasks.Tasks) == 0 {
+		return 0, fmt.Errorf("no tasks found")
+	}
+
 	for i := range tasks.Tasks {
 		if tasks.Tasks[i].Id == taskId {
 			tasks.Tasks[i].Status = markStatus(status)
@@ -168,19 +178,6 @@ func FetchByStatus(status TaskStatus) (*[]Task, error) {
 	return &filteredTasks, nil
 }
 
-func FetchById(id int) (*Task, error) {
-
-	// _, err := FetchAll()
-
-	// if err != nil {
-	// 	return &Task{}, err
-	// }
-	// log.Printf("Address of task: %p", &tasks)
-	filteredTasks := filter(func(task Task) bool { return task.Id == id })
-
-	return &filteredTasks[0], nil
-}
-
 func filter(f func(task Task) bool) []Task {
 
 	result := []Task{}
@@ -193,6 +190,11 @@ func filter(f func(task Task) bool) []Task {
 }
 
 func UpdateTask(id int, description string) error {
+
+	if len(tasks.Tasks) == 0 {
+		return fmt.Errorf("no tasks to update")
+	}
+
 	for i := range tasks.Tasks {
 		if tasks.Tasks[i].Id == id {
 			tasks.Tasks[i].Description = description
@@ -200,6 +202,28 @@ func UpdateTask(id int, description string) error {
 			err := Save()
 			if err != nil {
 				return err
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("task with id %d not found", id)
+}
+
+func DeleteTask(id int) error {
+	if len(tasks.Tasks) == 0 {
+		return fmt.Errorf("no tasks to delete")
+	}
+	for i := range tasks.Tasks {
+		if tasks.Tasks[i].Id == id {
+			tasks.Tasks = append(tasks.Tasks[:i], tasks.Tasks[i+1:]...)
+			err := Save()
+			if err != nil {
+				return err
+			}
+			if len(tasks.Tasks) == 0 {
+				taskId = 0
+			} else {
+				taskId = tasks.Tasks[len(tasks.Tasks)-1].Id
 			}
 			return nil
 		}
