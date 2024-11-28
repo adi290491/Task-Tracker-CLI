@@ -4,9 +4,28 @@ This is a basic Task Tracker CLI developed in Go. This project is a minimalistic
 ## FEATURES
 1. Add
    ```bash
-   >task-cli add <description>
+   task-cli add <description>
    ```
 2. Update
    ```bash
-   >task-cli update <id> <new-description>
-4. 
+   task-cli update <id> <new-description>
+   ```
+4. Delete
+   ```bash
+   task-cli delete <id>
+   ```
+5. Change progress status
+   ```bash
+   task-cli mark-in-progress <id>
+   ```
+   ```bash
+   task-cli mark-done <id>
+   ```
+6. List Tasks
+   ```bash
+   task-cli list [optional status]
+   options=[todo|in-progress|done]
+   ```
+
+
+   
